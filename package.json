@@ -27,5 +27,9 @@
 			"node": ">=0.8",
 			"docpad": ">=6"
 		},
-		"main": "./src/bowerrequirejs.plugin.coffee"
+		"main": "./src/bowerrequirejs.plugin.coffee",
+		"dependencies": {
+			"requirejs": "~2.1.0",
+			"underscore": "1.5.x"
+		}
 }
