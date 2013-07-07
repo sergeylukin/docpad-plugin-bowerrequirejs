@@ -107,8 +107,8 @@ module.exports = (BasePlugin) ->
 							fs.writeFile configFilePath, rjsConfig, (err) ->
 								console.log "Updated RequireJS config with installed Bower components"
 
-							# Done
-							next?()
+					# Done
+					next?()
 
 				.on 'error', (err) ->
 					next?(err)
