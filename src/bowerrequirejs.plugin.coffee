@@ -16,12 +16,14 @@ module.exports = (BasePlugin) ->
 			# Prepare
 			{collection} = opts
 			docpad = @docpad
+			# TODO: move this out to configuration
 			configFilePath = path.normalize "#{docpad.config.rootPath}/.tmp/scripts/main.js"
 			configFile = String( fs.readFileSync String(configFilePath) )
 			baseUrl = path.dirname configFilePath
 
 			require('bower').commands.list({paths: true})
 				.on 'data', (data) ->
+					# TODO: move this out to configuration
 					excludes = []
 
 					if data
