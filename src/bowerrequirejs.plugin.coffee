@@ -4,37 +4,50 @@ module.exports = (BasePlugin) ->
 	requirejs = require('requirejs/bin/r.js')
 	path = require('path')
 	fs = require('fs')
+	bower = require('bower')
 	_ = require('underscore')
+	levenshtein = require('levenshtein-distance')
 
 	# Define Plugin
 	class BowerRequirejsPlugin extends BasePlugin
 		# Plugin name
 		name: 'bowerrequirejs'
 
+		# Plugin configuration
+		config:
+			# By default only enalbed in static environment
+			enabled: false
+			environments:
+				static:
+					enabled: true
+			# Specify bower component names (like `jquery`, `almond`, etc.)
+			# you don't want to be linked
+			excludes: []
+			rjsConfig: 'scripts/main.js'
+
 		writeAfter: (opts, next) ->
 
 			# Prepare
 			{collection} = opts
 			docpad = @docpad
+			config = @config
+
 			# TODO: move this out to configuration
-			configFilePath = path.normalize "#{docpad.config.rootPath}/.tmp/scripts/main.js"
+			configFilePath = path.join docpad.config.outPath, config.rjsConfig
 			configFile = String( fs.readFileSync String(configFilePath) )
 			baseUrl = path.dirname configFilePath
 
 			require('bower').commands.list({paths: true})
-				.on 'data', (data) ->
-					# TODO: move this out to configuration
-					excludes = []
+				.on 'data', (components) ->
 
-					if data
+					if components
 
 						# remove excludes and clean up key names
-						_.each data, (val, key, obj) ->
-							if excludes.indexOf(key) isnt -1
+						_.each components, (val, key, obj) ->
+							if config.excludes.indexOf(key) isnt -1
 								delete obj[key]
-
 								return
-							
+
 							# clean up path names like 'typeahead.js'
 							# when requirejs sees the .js extension it will assume
 							# an absolute path, which we don't want.
@@ -44,24 +57,32 @@ module.exports = (BasePlugin) ->
 								delete obj[key]
 
 								console.log "Warning: Renaming " + key + " to " + newKey
-							
-							# if there's no main attribute in the bower.json file, for example:
-							# "almond": "bower_components/almond/"
-							# ..then look for a top level .js file, so we want this:
-							# "almond": "bower_components/almond/almond.js"
-							# assuming almond.js exists
-							# if we don't find one continue to use the original value.
-							# if we find any Gruntfiles, remove them
+
 							if not _.isArray(val)
+								# If path set in bower leads to a directory
+								# try to find file in it by ourselves..
 								if fs.statSync(val).isDirectory()
-									files = fs.readdirSync val
-									main = _.filter files, (fileName) ->
+									jsfiles = _.filter fs.readdirSync(val), (fileName) ->
 										return path.extname(fileName) is ".js" && fileName != 'Gruntfile.js'
-									obj[key] = (if main.length is 1 then path.join(val, main[0]) else val)
+
+									# Find best match using levenshtein distance
+									# algorithm if there are many .js files
+									if jsfiles.length > 1
+										new levenshtein(jsfiles).find key, (res) ->
+											obj[key] = path.join(val, res)
+									# Assign the only one that was found
+									else if jsfiles.length == 1
+										obj[key] = path.join(val, jsfiles[0])
+
+									# Ignore component if no .js file found
+									else
+										delete obj[key]
+
+						console.log components
 
 						requirejs.tools.useLib (require) ->
 							rjsConfig = require("transform").modifyConfig configFile, (config) ->
-								_.each data, (val, key, obj) ->
+								_.each components, (val, key, obj) ->
 									
 									# if main is not an array convert it to one so we can
 									# use the same process throughout
@@ -103,7 +124,7 @@ module.exports = (BasePlugin) ->
 									else
 										obj[key] = path.relative(baseUrl, jsfiles[0])
 
-								_.extend config.paths, data
+								_.extend config.paths, components
 								config
 
 							fs.writeFile configFilePath, rjsConfig, (err) ->

@@ -1,6 +1,6 @@
 {
 	"name": "docpad-plugin-bowerrequirejs",
-		"version": "2.0.0",
+		"version": "2.1.0",
 		"description": "DocPad plugin that wires-up installed Bower components into RequireJS config",
 		"homepage": "https://github.com/sergeylukin/docpad-plugin-bowerrequirejs",
 		"keywords": [
@@ -30,6 +30,7 @@
 		"main": "./src/bowerrequirejs.plugin.coffee",
 		"dependencies": {
 			"requirejs": "~2.1.0",
-			"underscore": "1.5.x"
+			"underscore": "1.5.x",
+			"levenshtein-distance": "0.0.2"
 		}
 }
