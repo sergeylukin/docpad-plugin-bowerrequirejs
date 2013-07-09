@@ -8,3 +8,7 @@ v2.1.0 July 9, 2013
 
 v2.1.1 July 9, 2013
   - Fix list of directories NPM should ignore
+
+v2.1.2 July 9, 2013
+  - Don't change paths for bower components whose paths are already defined in
+    RequireJS configuration

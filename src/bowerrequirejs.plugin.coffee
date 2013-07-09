@@ -83,6 +83,12 @@ module.exports = (BasePlugin) ->
 						requirejs.tools.useLib (require) ->
 							rjsConfig = require("transform").modifyConfig configFile, (config) ->
 								_.each components, (val, key, obj) ->
+
+									# Ignore this component if it's path is already defined in
+									# RequireJS
+									if config.paths[key]
+									  delete obj[key]
+									  return
 									
 									# if main is not an array convert it to one so we can
 									# use the same process throughout
